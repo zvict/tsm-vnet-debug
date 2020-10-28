@@ -239,7 +239,7 @@ def main():
         v_train(train_loader, val_loader,
                model, v_model, vnet,
                criterion, valcriterion,
-               optimizer, optimizer_vnet,
+               optimizer,
                epoch, log_training, tf_writer)
 
         # evaluate on validation set
@@ -269,7 +269,7 @@ def main():
 def v_train(train_loader, val_loader,
             model, v_model, vnet,
             criterion, valcriterion,
-            optimizer, optimizer_vnet,
+            optimizer,
             epoch, log, tf_writer):
     batch_time = AverageMeter()
     data_time = AverageMeter()
