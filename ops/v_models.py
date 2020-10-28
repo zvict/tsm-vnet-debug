@@ -219,7 +219,7 @@ class v_TSN(MetaModule):
         conv_cnt = 0
         bn_cnt = 0
         for m in self.modules():
-            if isinstance(m, (MetaConv2d, torch.nn.Conv1d, torch.nn.Conv3d)):
+            if isinstance(m, MetaConv2d):
                 ps = list(m.parameters())
                 conv_cnt += 1
                 if conv_cnt == 1:
