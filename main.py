@@ -306,7 +306,7 @@ def v_train(train_loader, val_loader,
         v_lambda = vnet(cost_v.data)
         l_f_v = torch.sum(cost_v * v_lambda) / len(cost_v)
         v_model.zero_grad()
-        grads = torch.autograd.grad(l_f_v, (v_model.module.params()), create_graph=True)
+        grads = torch.autograd.grad(l_f_v, (v_model.module.params()), create_graph=True, retain_graph=True)
         # to be modified
         v_lr = args.lr * ((0.1 ** int(epoch >= 80)) * (0.1 ** int(epoch >= 100)))
         v_model.module.update_params(lr_inner=v_lr, source_params=grads)
@@ -323,7 +323,18 @@ def v_train(train_loader, val_loader,
         y_g_hat = v_model(inputs_val)
         l_g_meta = valcriterion(y_g_hat, targets_val)  # val loss
         optimizer_vnet.zero_grad()
+        if i % args.print_freq == 0:
+            print("bf: ", end="")
+            for n, p in vnet.named_params(vnet):
+                print(n, p.shape, p.grad, end=" ")
+                break
         l_g_meta.backward()
+        if i % args.print_freq == 0:
+            print("af: ", end="")
+            for n, p in vnet.named_params(vnet):
+                print(n, p.shape, p.grad, end=" ")
+                break
+
         optimizer_vnet.step()
 
         # phase 1. network weight step (w)
