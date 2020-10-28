@@ -77,13 +77,13 @@ class v_TSN(MetaModule):
         feature_dim = self._prepare_tsn(num_class)
 
         if self.modality == 'Flow':
-            print("Converting the ImageNet model to a flow init model")
+            # print("Converting the ImageNet model to a flow init model")
             self.base_model = self._construct_flow_model(self.base_model)
-            print("Done. Flow model ready...")
+            # print("Done. Flow model ready...")
         elif self.modality == 'RGBDiff':
-            print("Converting the ImageNet model to RGB+Diff init model")
+            # print("Converting the ImageNet model to RGB+Diff init model")
             self.base_model = self._construct_diff_model(self.base_model)
-            print("Done. RGBDiff model ready.")
+            # print("Done. RGBDiff model ready.")
 
         self.consensus = ConsensusModule(consensus_type)
 
@@ -114,18 +114,18 @@ class v_TSN(MetaModule):
         return feature_dim
 
     def _prepare_base_model(self, base_model):
-        print('=> base model: {}'.format(base_model))
+        # print('=> base model: {}'.format(base_model))
 
         if 'resnet' in base_model:
             self.base_model = meta_resnet.resnet50(True if self.pretrain == 'imagenet' else False)
             if self.is_shift:
-                print('Adding temporal shift...')
+                # print('Adding temporal shift...')
                 from ops.temporal_shift import make_temporal_shift
                 make_temporal_shift(self.base_model, self.num_segments,
                                     n_div=self.shift_div, place=self.shift_place, temporal_pool=self.temporal_pool)
 
             if self.non_local:
-                print('Adding non-local module...')
+                # print('Adding non-local module...')
                 from ops.non_local import make_non_local
                 make_non_local(self.base_model, self.num_segments)
 
@@ -179,7 +179,7 @@ class v_TSN(MetaModule):
             elif self.modality == 'RGBDiff':
                 self.input_mean = self.input_mean * (1 + self.new_length)
             if self.is_shift:
-                print('Adding temporal shift...')
+                # print('Adding temporal shift...')
                 self.base_model.build_temporal_ops(
                     self.num_segments, is_temporal_shift=self.shift_place, shift_div=self.shift_div)
         else:
@@ -193,7 +193,7 @@ class v_TSN(MetaModule):
         super(v_TSN, self).train(mode)
         count = 0
         if self._enable_pbn and mode:
-            print("Freezing BatchNorm2D except the first one.")
+            # print("Freezing BatchNorm2D except the first one.")
             for m in self.base_model.modules():
                 if isinstance(m, MetaBatchNorm2d):
                     count += 1
@@ -348,9 +348,9 @@ class v_TSN(MetaModule):
             import torch.utils.model_zoo as model_zoo
             sd = model_zoo.load_url('https://www.dropbox.com/s/35ftw2t4mxxgjae/BNInceptionFlow-ef652051.pth.tar?dl=1')
             base_model.load_state_dict(sd)
-            print('=> Loading pretrained Flow weight done...')
-        else:
-            print('#' * 30, 'Warning! No Flow pretrained model is found')
+            # print('=> Loading pretrained Flow weight done...')
+        # else:
+            # print('#' * 30, 'Warning! No Flow pretrained model is found')
         return base_model
 
     def _construct_diff_model(self, base_model, keep_rgb=False):
@@ -400,7 +400,7 @@ class v_TSN(MetaModule):
                 return torchvision.transforms.Compose([GroupMultiScaleCrop(self.input_size, [1, .875, .75, .66]),
                                                        GroupRandomHorizontalFlip(is_flow=False)])
             else:
-                print('#' * 20, 'NO FLIP!!!')
+                # print('#' * 20, 'NO FLIP!!!')
                 return torchvision.transforms.Compose([GroupMultiScaleCrop(self.input_size, [1, .875, .75, .66])])
         elif self.modality == 'Flow':
             return torchvision.transforms.Compose([GroupMultiScaleCrop(self.input_size, [1, .875, .75]),

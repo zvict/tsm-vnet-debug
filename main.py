@@ -341,15 +341,15 @@ def v_train(train_loader, val_loader,
         y_g_hat = v_model(inputs_val)
         l_g_meta = valcriterion(y_g_hat, targets_val)  # val loss
         optimizer_vnet_temp.zero_grad()
-        if i % args.print_freq == 0:
+        if i % 120 == 0:
             print("bf: ", end="")
-            for n, p in vnet_temp.named_params(vnet):
+            for n, p in vnet_temp.named_params(vnet_temp):
                 print(n, p.shape, p.grad, end=" ")
                 break
         l_g_meta.backward()
-        if i % args.print_freq == 0:
+        if i % 120 == 0:
             print("af: ", end="")
-            for n, p in vnet_temp.named_params(vnet):
+            for n, p in vnet_temp.named_params(vnet_temp):
                 print(n, p.shape, p.grad, end=" ")
                 break
         optimizer_vnet_temp.step()

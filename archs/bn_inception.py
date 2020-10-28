@@ -77,8 +77,8 @@ class BNInception(nn.Module):
         # must call after loading weights
         self.n_segment = n_segment
         self.residual = 'res' in is_temporal_shift
-        if self.residual:
-            print('=> Using residual shift functions...')
+        # if self.residual:
+        #     print('=> Using residual shift functions...')
         if is_temporal_shift in ['block', 'blockres']:
             self.is_temporal_shift = '1' * 12
         else:
@@ -87,9 +87,9 @@ class BNInception(nn.Module):
 
         assert len(self.is_temporal_shift) == 12
 
-        print('=> Injecting temporal shift with mask {}'.format(self.is_temporal_shift))
+        # print('=> Injecting temporal shift with mask {}'.format(self.is_temporal_shift))
         self.fold_div = shift_div
-        print('=> Using fold div: {}'.format(self.fold_div))
+        # print('=> Using fold div: {}'.format(self.fold_div))
 
     def _temporal_forward_wrap(self, layer_func, index):
         if hasattr(self, 'is_temporal_shift') and self.is_temporal_shift[index] == '1':  # run temporal shuffling
@@ -638,7 +638,7 @@ def bninception(pretrained='imagenet'):
     r"""BNInception model architecture from <https://arxiv.org/pdf/1502.03167.pdf>`_ paper.
     """
     if pretrained is not None:
-        print('=> Loading from pretrained model: {}'.format(pretrained))
+        # print('=> Loading from pretrained model: {}'.format(pretrained))
         settings = pretrained_settings['bninception'][pretrained]
         num_classes = settings['num_classes']
         model = BNInception(num_classes=num_classes)
