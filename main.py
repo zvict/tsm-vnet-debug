@@ -341,17 +341,7 @@ def v_train(train_loader, val_loader,
         y_g_hat = v_model(inputs_val)
         l_g_meta = valcriterion(y_g_hat, targets_val)  # val loss
         optimizer_vnet_temp.zero_grad()
-        if i % 120 == 0:
-            print("bf: ", end="")
-            for n, p in vnet_temp.named_params(vnet_temp):
-                print(n, p.shape, p.grad, end=" ")
-                break
         l_g_meta.backward()
-        if i % 120 == 0:
-            print("af: ", end="")
-            for n, p in vnet_temp.named_params(vnet_temp):
-                print(n, p.shape, p.grad, end=" ")
-                break
         optimizer_vnet_temp.step()
         vnet.load_state_dict(vnet_temp.state_dict())
 
@@ -395,7 +385,10 @@ def v_train(train_loader, val_loader,
                       'Prec@5 {top5.val:.3f} ({top5.avg:.3f})'.format(
                           epoch, i, len(train_loader), batch_time=batch_time,
                           data_time=data_time, loss=losses, top1=top1, top5=top5, lr=optimizer.param_groups[-1]['lr'] * 0.1))  # TODO
-            print(output)
+            print(output, end=" ")
+            for n, p in vnet.named_params(vnet):
+                print("vnet param: ", n, p[0])
+                break
             log.write(output + '\n')
             log.flush()
 
