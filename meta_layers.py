@@ -95,6 +95,7 @@ class MetaLinear(MetaModule):
     def __init__(self, *args, **kwargs):
         super().__init__()
         ignore = nn.Linear(*args, **kwargs)
+        self.in_features = ignore.in_features
        
         self.register_buffer('weight', to_var(ignore.weight.data, requires_grad=True))
         self.register_buffer('bias', to_var(ignore.bias.data, requires_grad=True))
