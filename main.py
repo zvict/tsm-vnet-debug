@@ -387,7 +387,7 @@ def v_train(train_loader, val_loader,
                           data_time=data_time, loss=losses, top1=top1, top5=top5, lr=optimizer.param_groups[-1]['lr'] * 0.1))  # TODO
             print(output, end=" ")
             for n, p in vnet.named_params(vnet):
-                print("vnet param: ", n, p[0])
+                print("vnet param: ", n, p[0].data)
                 break
             log.write(output + '\n')
             log.flush()
