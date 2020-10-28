@@ -105,9 +105,9 @@ def main():
     #                               args.lr,
     #                               momentum=args.momentum,
     #                               weight_decay=args.weight_decay)
-    optimizer_vnet = torch.optim.Adam(vnet.params(),
-                                      1e-3,
-                                      weight_decay=1e-4)
+    # optimizer_vnet = torch.optim.Adam(vnet.params(),
+    #                                   1e-3,
+    #                                   weight_decay=1e-4)
 
     if args.resume:
         print("resuming ...")
@@ -298,12 +298,16 @@ def v_train(train_loader, val_loader,
         input_var = torch.autograd.Variable(input)
         target_var = torch.autograd.Variable(target)
 
+        vnet_temp = VNet(1, 100, 1).cuda()
+        optimizer_vnet_temp = torch.optim.Adam(vnet_temp.params(), 1e-3, weight_decay=1e-4)
+        vnet_temp.load_state_dict(vnet.state_dict())
+
         # compute output
         output = v_model(input_var)
         # loss = criterion(output, target_var)
         cost = criterion(output, target_var)
         cost_v = torch.reshape(cost, (-1, 1))
-        v_lambda = vnet(cost_v.data)
+        v_lambda = vnet_temp(cost_v.data)
         l_f_v = torch.sum(cost_v * v_lambda) / len(cost_v)
         v_model.zero_grad()
         grads = torch.autograd.grad(l_f_v, (v_model.module.params()), create_graph=True)
@@ -322,20 +326,20 @@ def v_train(train_loader, val_loader,
         inputs_val, targets_val = inputs_val.cuda(), targets_val.cuda()
         y_g_hat = v_model(inputs_val)
         l_g_meta = valcriterion(y_g_hat, targets_val)  # val loss
-        optimizer_vnet.zero_grad()
+        optimizer_vnet_temp.zero_grad()
         if i % args.print_freq == 0:
             print("bf: ", end="")
-            for n, p in vnet.named_params(vnet):
+            for n, p in vnet_temp.named_params(vnet):
                 print(n, p.shape, p.grad, end=" ")
                 break
-        l_g_meta.backward(retain_graph=True)
+        l_g_meta.backward()
         if i % args.print_freq == 0:
             print("af: ", end="")
-            for n, p in vnet.named_params(vnet):
+            for n, p in vnet_temp.named_params(vnet):
                 print(n, p.shape, p.grad, end=" ")
                 break
-
-        optimizer_vnet.step()
+        optimizer_vnet_temp.step()
+        vnet.load_state_dict(vnet_temp.state_dict())
 
         # phase 1. network weight step (w)
         output = model(input_var)
