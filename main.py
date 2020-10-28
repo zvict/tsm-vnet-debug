@@ -68,18 +68,18 @@ def main():
                 fc_lr5=not (args.tune_from and args.dataset in args.tune_from),
                 temporal_pool=args.temporal_pool,
                 non_local=args.non_local)
-    v_model = v_TSN(num_class, args.num_segments, args.modality,
-                  base_model=args.arch,
-                  consensus_type=args.consensus_type,
-                  dropout=args.dropout,
-                  img_feature_dim=args.img_feature_dim,
-                  partial_bn=not args.no_partialbn,
-                  pretrain=args.pretrain,
-                  is_shift=args.shift, shift_div=args.shift_div, shift_place=args.shift_place,
-                  fc_lr5=not (
-                      args.tune_from and args.dataset in args.tune_from),
-                  temporal_pool=args.temporal_pool,
-                  non_local=args.non_local)
+    # v_model = v_TSN(num_class, args.num_segments, args.modality,
+    #               base_model=args.arch,
+    #               consensus_type=args.consensus_type,
+    #               dropout=args.dropout,
+    #               img_feature_dim=args.img_feature_dim,
+    #               partial_bn=not args.no_partialbn,
+    #               pretrain=args.pretrain,
+    #               is_shift=args.shift, shift_div=args.shift_div, shift_place=args.shift_place,
+    #               fc_lr5=not (
+    #                   args.tune_from and args.dataset in args.tune_from),
+    #               temporal_pool=args.temporal_pool,
+    #               non_local=args.non_local)
     vnet = VNet(1, 100, 1).cuda()
 
     print("getting sizes ...")
@@ -94,7 +94,7 @@ def main():
 
     print("model paralleling ...")
     model = torch.nn.DataParallel(model, device_ids=args.gpus).cuda()
-    v_model = torch.nn.DataParallel(v_model, device_ids=args.gpus).cuda()
+    # v_model = torch.nn.DataParallel(v_model, device_ids=args.gpus).cuda()
 
     print("building optimizers ...")
     optimizer = torch.optim.SGD(policies,
@@ -156,7 +156,6 @@ def main():
 
     if args.temporal_pool and not args.resume:
         make_temporal_pool(model.module.base_model, args.num_segments)
-        make_temporal_pool(v_model.module.base_model, args.num_segments)
 
     cudnn.benchmark = True
 
@@ -237,7 +236,7 @@ def main():
         # train for one epoch
         # train(train_loader, model, criterion, optimizer, epoch, log_training, tf_writer)
         v_train(train_loader, val_loader,
-               model, v_model, vnet,
+               model, num_class, vnet,
                criterion, valcriterion,
                optimizer,
                epoch, log_training, tf_writer)
@@ -267,7 +266,7 @@ def main():
 
 
 def v_train(train_loader, val_loader,
-            model, v_model, vnet,
+            model, num_class, vnet,
             criterion, valcriterion,
             optimizer,
             epoch, log, tf_writer):
@@ -292,8 +291,6 @@ def v_train(train_loader, val_loader,
         # measure data loading time
         data_time.update(time.time() - end)
 
-        v_model.load_state_dict(model.state_dict())
-
         target = target.cuda()
         input_var = torch.autograd.Variable(input)
         target_var = torch.autograd.Variable(target)
@@ -301,6 +298,23 @@ def v_train(train_loader, val_loader,
         vnet_temp = VNet(1, 100, 1).cuda()
         optimizer_vnet_temp = torch.optim.Adam(vnet_temp.params(), 1e-3, weight_decay=1e-4)
         vnet_temp.load_state_dict(vnet.state_dict())
+
+        v_model = v_TSN(num_class, args.num_segments, args.modality,
+                        base_model=args.arch,
+                        consensus_type=args.consensus_type,
+                        dropout=args.dropout,
+                        img_feature_dim=args.img_feature_dim,
+                        partial_bn=not args.no_partialbn,
+                        pretrain=args.pretrain,
+                        is_shift=args.shift, shift_div=args.shift_div, shift_place=args.shift_place,
+                        fc_lr5=not (
+                            args.tune_from and args.dataset in args.tune_from),
+                        temporal_pool=args.temporal_pool,
+                        non_local=args.non_local, print_spec=False)
+        v_model = torch.nn.DataParallel(v_model, device_ids=args.gpus).cuda()
+        if args.temporal_pool and not args.resume:
+            make_temporal_pool(v_model.module.base_model, args.num_segments)
+        v_model.load_state_dict(model.state_dict())
 
         # compute output
         output = v_model(input_var)
