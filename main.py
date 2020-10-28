@@ -235,12 +235,12 @@ def main():
         adjust_learning_rate(optimizer, epoch, args.lr_type, args.lr_steps)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, log_training, tf_writer)
-        # v_train(train_loader, val_loader,
-        #        model, v_model, vnet,
-        #        criterion, valcriterion,
-        #        optimizer, v_optimizer, optimizer_vnet,
-        #        epoch, log_training, tf_writer)
+        # train(train_loader, model, criterion, optimizer, epoch, log_training, tf_writer)
+        v_train(train_loader, val_loader,
+               model, v_model, vnet,
+               criterion, valcriterion,
+               optimizer, v_optimizer, optimizer_vnet,
+               epoch, log_training, tf_writer)
 
         # evaluate on validation set
         if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:
