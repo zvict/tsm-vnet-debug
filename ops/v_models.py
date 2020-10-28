@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from ops.basic_ops import ConsensusModule
 from ops.transforms import *
 from torch.nn.init import normal_, constant_
-from meta_layers import MetaLinear, MetaBatchNorm2d, MetaConv2d
+from meta_layers import MetaLinear, MetaBatchNorm2d, MetaConv2d, MetaModule
 from meta_backbones import meta_resnet
 
 
