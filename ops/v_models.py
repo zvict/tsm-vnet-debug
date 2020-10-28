@@ -5,7 +5,8 @@ from torch.autograd import Variable
 from ops.basic_ops import ConsensusModule
 from ops.transforms import *
 from torch.nn.init import normal_, constant_
-from meta_layers import MetaLinear
+from meta_layers import MetaLinear, MetaBatchNorm2d, MetaConv2d
+from meta_backbones import meta_resnet
 
 
 class VNet(MetaModule):
@@ -96,11 +97,11 @@ class v_TSN(MetaModule):
     def _prepare_tsn(self, num_class):
         feature_dim = getattr(self.base_model, self.base_model.last_layer_name).in_features
         if self.dropout == 0:
-            setattr(self.base_model, self.base_model.last_layer_name, nn.Linear(feature_dim, num_class))
+            setattr(self.base_model, self.base_model.last_layer_name, MetaLinear(feature_dim, num_class))
             self.new_fc = None
         else:
             setattr(self.base_model, self.base_model.last_layer_name, nn.Dropout(p=self.dropout))
-            self.new_fc = nn.Linear(feature_dim, num_class)
+            self.new_fc = MetaLinear(feature_dim, num_class)
 
         std = 0.001
         if self.new_fc is None:
@@ -116,7 +117,7 @@ class v_TSN(MetaModule):
         print('=> base model: {}'.format(base_model))
 
         if 'resnet' in base_model:
-            self.base_model = getattr(torchvision.models, base_model)(True if self.pretrain == 'imagenet' else False)
+            self.base_model = meta_resnet.resnet50(True if self.pretrain == 'imagenet' else False)
             if self.is_shift:
                 print('Adding temporal shift...')
                 from ops.temporal_shift import make_temporal_shift
@@ -194,7 +195,7 @@ class v_TSN(MetaModule):
         if self._enable_pbn and mode:
             print("Freezing BatchNorm2D except the first one.")
             for m in self.base_model.modules():
-                if isinstance(m, nn.BatchNorm2d):
+                if isinstance(m, MetaBatchNorm2d):
                     count += 1
                     if count >= (2 if self._enable_pbn else 1):
                         m.eval()
@@ -218,7 +219,7 @@ class v_TSN(MetaModule):
         conv_cnt = 0
         bn_cnt = 0
         for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.Conv1d) or isinstance(m, torch.nn.Conv3d):
+            if isinstance(m, (MetaConv2d, torch.nn.Conv1d, torch.nn.Conv3d)):
                 ps = list(m.parameters())
                 conv_cnt += 1
                 if conv_cnt == 1:
@@ -229,7 +230,7 @@ class v_TSN(MetaModule):
                     normal_weight.append(ps[0])
                     if len(ps) == 2:
                         normal_bias.append(ps[1])
-            elif isinstance(m, torch.nn.Linear):
+            elif isinstance(m, MetaLinear):
                 ps = list(m.parameters())
                 if self.fc_lr5:
                     lr5_weight.append(ps[0])
@@ -241,7 +242,7 @@ class v_TSN(MetaModule):
                     else:
                         normal_bias.append(ps[1])
 
-            elif isinstance(m, torch.nn.BatchNorm2d):
+            elif isinstance(m, MetaBatchNorm2d):
                 bn_cnt += 1
                 # later BN's are frozen
                 if not self._enable_pbn or bn_cnt == 1:
@@ -322,7 +323,7 @@ class v_TSN(MetaModule):
         # Torch models are usually defined in a hierarchical way.
         # nn.modules.children() return all sub modules in a DFS manner
         modules = list(self.base_model.modules())
-        first_conv_idx = list(filter(lambda x: isinstance(modules[x], nn.Conv2d), list(range(len(modules)))))[0]
+        first_conv_idx = list(filter(lambda x: isinstance(modules[x], MetaConv2d), list(range(len(modules)))))[0]
         conv_layer = modules[first_conv_idx]
         container = modules[first_conv_idx - 1]
 
@@ -332,9 +333,9 @@ class v_TSN(MetaModule):
         new_kernel_size = kernel_size[:1] + (2 * self.new_length, ) + kernel_size[2:]
         new_kernels = params[0].data.mean(dim=1, keepdim=True).expand(new_kernel_size).contiguous()
 
-        new_conv = nn.Conv2d(2 * self.new_length, conv_layer.out_channels,
-                             conv_layer.kernel_size, conv_layer.stride, conv_layer.padding,
-                             bias=True if len(params) == 2 else False)
+        new_conv = MetaConv2d(2 * self.new_length, conv_layer.out_channels,
+                              conv_layer.kernel_size, conv_layer.stride, conv_layer.padding,
+                              bias=True if len(params) == 2 else False)
         new_conv.weight.data = new_kernels
         if len(params) == 2:
             new_conv.bias.data = params[1].data # add bias if neccessary
@@ -357,7 +358,7 @@ class v_TSN(MetaModule):
         # Torch models are usually defined in a hierarchical way.
         # nn.modules.children() return all sub modules in a DFS manner
         modules = list(self.base_model.modules())
-        first_conv_idx = filter(lambda x: isinstance(modules[x], nn.Conv2d), list(range(len(modules))))[0]
+        first_conv_idx = filter(lambda x: isinstance(modules[x], MetaConv2d), list(range(len(modules))))[0]
         conv_layer = modules[first_conv_idx]
         container = modules[first_conv_idx - 1]
 
@@ -373,7 +374,7 @@ class v_TSN(MetaModule):
                                     1)
             new_kernel_size = kernel_size[:1] + (3 + 3 * self.new_length,) + kernel_size[2:]
 
-        new_conv = nn.Conv2d(new_kernel_size[1], conv_layer.out_channels,
+        new_conv = MetaConv2d(new_kernel_size[1], conv_layer.out_channels,
                              conv_layer.kernel_size, conv_layer.stride, conv_layer.padding,
                              bias=True if len(params) == 2 else False)
         new_conv.weight.data = new_kernels

@@ -8,6 +8,7 @@ from torch import nn
 from ops.basic_ops import ConsensusModule
 from ops.transforms import *
 from torch.nn.init import normal_, constant_
+from meta_backbones import resnet
 
 
 class TSN(nn.Module):
@@ -101,7 +102,8 @@ class TSN(nn.Module):
         print('=> base model: {}'.format(base_model))
 
         if 'resnet' in base_model:
-            self.base_model = getattr(torchvision.models, base_model)(True if self.pretrain == 'imagenet' else False)
+            # self.base_model = getattr(torchvision.models, base_model)(True if self.pretrain == 'imagenet' else False)
+            self.base_model = resnet.resnet50(True if self.pretrain == 'imagenet' else False)
             if self.is_shift:
                 print('Adding temporal shift...')
                 from ops.temporal_shift import make_temporal_shift

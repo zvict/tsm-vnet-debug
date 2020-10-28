@@ -6,6 +6,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from meta_backbones import meta_resnet, resnet
 
 
 class TemporalShift(nn.Module):
@@ -103,7 +104,7 @@ def make_temporal_shift(net, n_segment, n_div=8, place='blockres', temporal_pool
     print('=> n_segment per stage: {}'.format(n_segment_list))
 
     import torchvision
-    if isinstance(net, torchvision.models.ResNet):
+    if isinstance(net, (resnet.ResNet, meta_resnet.ResNet)):
         if place == 'block':
             def make_block_temporal(stage, this_segment):
                 blocks = list(stage.children())
