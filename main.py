@@ -437,7 +437,7 @@ def v_train_consensus(train_loader, val_loader,
 
         # compute output
         output = v_model(input_var, vnet=vnet_temp)
-        print(output.shape())
+        print(output.shape)
         if i == 0:
             for n, p in v_model.module.named_params(v_model):
                 print(n, p.shape)
