@@ -299,12 +299,11 @@ class v_TSN(MetaModule):
                 base_out = base_out.view((-1, self.num_segments // 2) + base_out.size()[1:])
             else:
                 base_out = base_out.view((-1, self.num_segments) + base_out.size()[1:])
-            if no_grad_vnet:
-                with torch.no_grad():
-                    output = self.consensus(base_out, vnet=vnet)
+            if self.consensus_type == "vnet":
+                return base_out
             else:
-                output = self.consensus(base_out, vnet=vnet)
-            return output.squeeze(1)
+                output = self.consensus(base_out)
+                return output.squeeze(1)
 
     def _get_diff(self, input, keep_rgb=False):
         input_c = 3 if self.modality in ["RGB", "RGBDiff"] else 2

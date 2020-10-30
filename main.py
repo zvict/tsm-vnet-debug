@@ -436,15 +436,16 @@ def v_train_consensus(train_loader, val_loader,
         v_model.load_state_dict(model.state_dict())
 
         # compute output
-        output = v_model(input_var, vnet=vnet_temp)
-        print(output.shape)
-        if i == 0:
-            for n, p in v_model.module.named_params(v_model):
-                print(n, p.shape)
+        base_output = v_model(input_var)
+        output = torch.reshape(base_output, (-1, num_class))
+        seg_weight = vnet_temp(output)
+        output = output * seg_weight
+        output = torch.reshape(output, base_output.shape)
+        output = output.sum(dim=1, keepdim=True)
+        output = output.squeeze(1)
         cost = criterion(output, target_var)
         v_model.zero_grad()
-        grads = torch.autograd.grad(cost, (v_model.module.params()), create_graph=True, allow_unused=True)
-        print(grads)
+        grads = torch.autograd.grad(cost, (v_model.module.params()), create_graph=True)
         v_lr = args.lr * ((0.1 ** int(epoch >= 80)) * (0.1 ** int(epoch >= 100)))
         v_model.module.update_params(lr_inner=v_lr, source_params=grads)
         del grads
@@ -456,7 +457,18 @@ def v_train_consensus(train_loader, val_loader,
             val_loader_iter = iter(val_loader)
             inputs_val, targets_val = next(val_loader_iter)
         inputs_val, targets_val = inputs_val.cuda(), targets_val.cuda()
-        y_g_hat = v_model(inputs_val, no_grad_vnet=True, vnet=vnet_temp)
+        base_output = v_model(inputs_val)
+        # method 1:
+        vnet_val_temp = VNet(num_class, 200, num_class).cuda()
+        vnet_val_temp.load_state_dict(vnet_temp.state_dict())
+        y_g_hat = torch.reshape(base_output, (-1, num_class))
+        seg_weight = vnet_val_temp(y_g_hat)
+        y_g_hat = y_g_hat * seg_weight
+        y_g_hat = torch.reshape(y_g_hat, base_output.shape)
+        y_g_hat = y_g_hat.sum(dim=1, keepdim=True)
+        y_g_hat = y_g_hat.squeeze(1)
+        # method 2:
+        # y_g_hat = base_output.mean(dim=1, keepdim=True).squeeze(1)
         l_g_meta = valcriterion(y_g_hat, targets_val)  # val loss
         optimizer_vnet_temp.zero_grad()
         l_g_meta.backward()
@@ -464,7 +476,14 @@ def v_train_consensus(train_loader, val_loader,
         vnet.load_state_dict(vnet_temp.state_dict())
 
         # phase 1. network weight step (w)
-        output = model(input_var, vnet=vnet)
+        base_output = model(input_var, vnet=vnet)
+        output = torch.reshape(base_output, (-1, num_class))
+        with torch.no_grad():
+            seg_weight = vnet(output)
+        output = output * seg_weight
+        output = torch.reshape(output, base_output.shape)
+        output = output.sum(dim=1, keepdim=True)
+        output = output.squeeze(1)
         loss = criterion(output, target)
         optimizer.zero_grad()
         loss.backward()
