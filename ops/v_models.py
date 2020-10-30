@@ -276,7 +276,7 @@ class v_TSN(MetaModule):
              'name': "lr10_bias"},
         ]
 
-    def forward(self, input, no_reshape=False, vnet=None, no_grad_vnet=False):
+    def forward(self, input, no_reshape=False):
         if not no_reshape:
             sample_len = (3 if self.modality == "RGB" else 2) * self.new_length
 

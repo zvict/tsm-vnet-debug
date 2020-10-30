@@ -262,7 +262,7 @@ class TSN(nn.Module):
              'name': "lr10_bias"},
         ]
 
-    def forward(self, input, no_reshape=False, vnet=None):
+    def forward(self, input, no_reshape=False):
         if not no_reshape:
             sample_len = (3 if self.modality == "RGB" else 2) * self.new_length
 
@@ -286,7 +286,7 @@ class TSN(nn.Module):
             else:
                 base_out = base_out.view((-1, self.num_segments) + base_out.size()[1:])
             with torch.no_grad():
-                output = self.consensus(base_out, vnet=vnet)
+                output = self.consensus(base_out)
             return output.squeeze(1)
 
     def _get_diff(self, input, keep_rgb=False):
