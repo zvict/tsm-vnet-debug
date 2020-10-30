@@ -27,7 +27,7 @@ class SegmentConsensus(torch.nn.Module):
             input_var = torch.reshape(input_var, (-1, num_class))
             seg_weight = self.vnet(input_var)
             output = input_var * seg_weight
-            output = torch.reshape(output, shape)
+            output = torch.reshape(output, self.shape)
             output = output.sum(dim=self.dim, keepdim=True)      
         else:
             output = None
