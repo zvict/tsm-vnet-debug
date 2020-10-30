@@ -22,7 +22,7 @@ class SegmentConsensus(torch.nn.Module):
         elif self.consensus_type == 'identity':
             output = input_tensor
         elif self.consensus_type == 'vnet':
-            num_class = shape[2]
+            num_class = self.shape[2]
             input_var = torch.autograd.Variable(input_tensor)
             input_var = torch.reshape(input_var, (-1, num_class))
             seg_weight = self.vnet(input_var)
