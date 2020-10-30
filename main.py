@@ -201,7 +201,7 @@ def main():
             group['name'], len(group['params']), group['lr_mult'], group['decay_mult'])))
 
     if args.evaluate:
-        validate(val_loader, model, criterion, 0)
+        validate(val_loader, model, criterion, 0, vnet_consensus)
         return
 
     log_training = open(os.path.join(
