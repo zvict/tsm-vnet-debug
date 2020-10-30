@@ -476,7 +476,7 @@ def v_train_consensus(train_loader, val_loader,
         vnet.load_state_dict(vnet_temp.state_dict())
 
         # phase 1. network weight step (w)
-        base_output = model(input_var, vnet=vnet)
+        base_output = model(input_var)
         output = torch.reshape(base_output, (-1, num_class))
         with torch.no_grad():
             seg_weight = vnet(output)
