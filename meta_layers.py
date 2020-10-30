@@ -47,9 +47,6 @@ class MetaModule(nn.Module):
         if source_params is not None:
             for tgt, src in zip(self.named_params(self), source_params):
                 name_t, param_t = tgt
-                if not src:
-                    print(name_t)
-                    continue
                 # name_s, param_s = src
                 # grad = param_s.grad
                 # name_s, param_s = src

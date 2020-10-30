@@ -443,6 +443,7 @@ def v_train_consensus(train_loader, val_loader,
         cost = criterion(output, target_var)
         v_model.zero_grad()
         grads = torch.autograd.grad(cost, (v_model.module.params()), create_graph=True, allow_unused=True)
+        print(grads)
         v_lr = args.lr * ((0.1 ** int(epoch >= 80)) * (0.1 ** int(epoch >= 100)))
         v_model.module.update_params(lr_inner=v_lr, source_params=grads)
         del grads
