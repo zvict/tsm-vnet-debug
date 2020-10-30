@@ -230,7 +230,7 @@ def main():
         # evaluate on validation set
         if (epoch + 1) % args.eval_freq == 0 or epoch == args.epochs - 1:
             prec1 = validate(val_loader, model, criterion,
-                             epoch, log_training, tf_writer)
+                             epoch, log_training, tf_writer, vnet_consensus)
 
             # remember best prec@1 and save checkpoint
             is_best = prec1 > best_prec1
@@ -598,7 +598,7 @@ def train(train_loader, model, criterion, optimizer, epoch, log, tf_writer):
     tf_writer.add_scalar('lr', optimizer.param_groups[-1]['lr'], epoch)
 
 
-def validate(val_loader, model, criterion, epoch, log=None, tf_writer=None):
+def validate(val_loader, model, criterion, epoch, log=None, tf_writer=None, vnet=None):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -613,7 +613,14 @@ def validate(val_loader, model, criterion, epoch, log=None, tf_writer=None):
             target = target.cuda()
 
             # compute output
-            output = model(input)
+            base_output = model(input)
+            output = torch.reshape(base_output, (-1, num_class))
+            with torch.no_grad():
+                seg_weight = vnet(output)
+            output = output * seg_weight
+            output = torch.reshape(output, base_output.shape)
+            output = output.sum(dim=1, keepdim=True)
+            output = output.squeeze(1)
             loss = criterion(output, target)
 
             # measure accuracy and record loss
