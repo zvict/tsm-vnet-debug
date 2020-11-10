@@ -24,7 +24,7 @@ class SegmentConsensus(torch.nn.Module):
         else:
             output = None
 
-        print("in consensus, output.shape = ", output.size())
+        # print("in consensus, output.shape = ", output.size())
         return output
 
 
