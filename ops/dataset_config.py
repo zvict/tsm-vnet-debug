@@ -5,7 +5,7 @@
 
 import os
 
-ROOT_DATASET = '/content/drive/My Drive/UCSD/vTSM/dataset/'  # '/data/jilin/'
+ROOT_DATASET = '/zys-volume/vTSM-full/dataset/something-something-v2/'  # '/data/jilin/'
 
 
 def return_ucf101(modality):
@@ -63,12 +63,12 @@ def return_something(modality):
 def return_somethingv2(modality):
     filename_categories = 'category.txt'
     if modality == 'RGB':
-        root_data = ROOT_DATASET + 'ssv2'
+        root_data = ROOT_DATASET + '20bn-something-something-v2-frames'
         filename_imglist_train = 'train_videofolder.txt'
         filename_imglist_val = 'val_videofolder.txt'
         prefix = '{:06d}.jpg'
     elif modality == 'Flow':
-        root_data = ROOT_DATASET + '0bn-something-something-v2-flow'
+        root_data = ROOT_DATASET + '20bn-something-something-v2-flow'
         filename_imglist_train = 'train_videofolder_flow.txt'
         filename_imglist_val = 'val_videofolder_flow.txt'
         prefix = '{:06d}.jpg'

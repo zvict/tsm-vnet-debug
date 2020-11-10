@@ -185,7 +185,7 @@ def main():
                        normalize,
                    ]), dense_sample=args.dense_sample),
         batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True,
+        num_workers=args.workers, pin_memory=False,
         drop_last=True)  # prevent something not % n_GPU
 
     val_loader = torch.utils.data.DataLoader(
@@ -204,7 +204,7 @@ def main():
                        normalize,
                    ]), dense_sample=args.dense_sample),
         batch_size=args.batch_size, shuffle=False,
-        num_workers=args.workers, pin_memory=True)
+        num_workers=args.workers, pin_memory=False)
 
     # define loss function (criterion) and optimizer
     print("defining loss and optimizer ...")
