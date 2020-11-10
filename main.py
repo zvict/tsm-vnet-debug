@@ -119,6 +119,10 @@ def main():
             args.start_epoch = checkpoint['epoch']
             best_prec1 = checkpoint['best_prec1']
             model.load_state_dict(checkpoint['state_dict'])
+            try:
+                vnet.load_state_dict(checkpoint['state_dict_vnet'])
+            except:
+                print("No 'state_dict_vnet' when resuming.")
             optimizer.load_state_dict(checkpoint['optimizer'])
             print(("=> loaded checkpoint '{}' (epoch {})"
                    .format(args.evaluate, checkpoint['epoch'])))
@@ -260,6 +264,7 @@ def main():
                 'epoch': epoch + 1,
                 'arch': args.arch,
                 'state_dict': model.state_dict(),
+                'state_dict_vnet': vnet.state_dict(),
                 'optimizer': optimizer.state_dict(),
                 'best_prec1': best_prec1,
             }, is_best)
@@ -387,7 +392,7 @@ def v_train(train_loader, val_loader,
                           data_time=data_time, loss=losses, top1=top1, top5=top5, lr=optimizer.param_groups[-1]['lr'] * 0.1))  # TODO
             print(output, end=" ")
             for n, p in vnet.named_params(vnet):
-                print("vnet param: ", n, p[0].data)
+                print("vnet param: ", n, p[0].item())
                 break
             log.write(output + '\n')
             log.flush()
